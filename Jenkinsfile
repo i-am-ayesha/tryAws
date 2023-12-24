@@ -1,49 +1,53 @@
-pipeline{
+pipeline {
+    agent { label 'linux' }
 
-	agent {label 'linux'}
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerHub')
+    }
 
-	environment {
-		DOCKERHUB_CREDENTIALS=credentials('dockerHub')
-	}
-  options {
+    options {
         skipDefaultCheckout true
     }
-	stages {
-	    
-	    stage('gitclone') {
 
-			steps {
-				checkout scm
-				git 'https://github.com/i-am-ayesha/tryAws.git'
-			}
-		}
+    stages {
+        stage('gitclone') {
+            steps {
+                script {
+                    checkout scm
+                }
+            }
+        }
 
-		stage('Build') {
+        stage('Build') {
+            steps {
+                script {
+                    sh 'docker build -t ayesha65/app_test:latest .'
+                }
+            }
+        }
 
-			steps {
-				sh 'docker build -t ayesha65/app_test:latest .'
-			}
-		}
+        stage('Login') {
+            steps {
+                script {
+                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                }
+            }
+        }
 
-		stage('Login') {
+        stage('Push') {
+            steps {
+                script {
+                    sh 'docker push ayesha65/app_test:latest'
+                }
+            }
+        }
+    }
 
-			steps {
-				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-			}
-		}
-
-		stage('Push') {
-
-			steps {
-				sh 'docker push ayesha65/app_test:latest'
-			}
-		}
-	}
-
-	post {
-		always {
-			sh 'docker logout'
-		}
-	}
-
+    post {
+        always {
+            script {
+                sh 'docker logout'
+            }
+        }
+    }
 }
