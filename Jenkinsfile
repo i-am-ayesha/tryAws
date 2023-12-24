@@ -5,12 +5,15 @@ pipeline{
 	environment {
 		DOCKERHUB_CREDENTIALS=credentials('dockerHub')
 	}
-
+  options {
+        skipDefaultCheckout true
+    }
 	stages {
 	    
 	    stage('gitclone') {
 
 			steps {
+				checkout scm
 				git 'https://github.com/i-am-ayesha/tryAws.git'
 			}
 		}
