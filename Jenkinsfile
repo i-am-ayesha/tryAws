@@ -17,8 +17,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Test') {
+  stage('Test') {
             steps {
                 sh 'ls -l index.html'
             }
