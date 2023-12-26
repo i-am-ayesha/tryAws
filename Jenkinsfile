@@ -17,12 +17,11 @@ pipeline {
                 }
             }
         }
-  stage('Test') {
+        stage('Test') {
             steps {
                 sh 'ls -l index.html'
             }
         }
-
         stage('Deploy') {
             steps {
                 script {
@@ -41,12 +40,10 @@ pipeline {
                             )
                         ]
                     )
-                }
-            }
-boolean isDeploymentSuccessful = sh(script: 'curl -s -o /dev/null -w "%{http_code}" http://13.55.189.21', returnStdout: true).trim() == '200'
+
+                    boolean isDeploymentSuccessful = sh(script: 'curl -s -o /dev/null -w "%{http_code}" http://13.55.189.21', returnStdout: true).trim() == '200'
 
                     if (!isDeploymentSuccessful) {
-                       
                         def previousSuccessfulTag = readFile('previous_successful_tag.txt').trim()
                         sshPublisher(
                             publishers: [
@@ -64,22 +61,19 @@ boolean isDeploymentSuccessful = sh(script: 'curl -s -o /dev/null -w "%{http_cod
                             ]
                         )
                     } else {
-                       
                         writeFile file: 'previous_successful_tag.txt', text: "${env.BUILD_ID}"
                     }
                 }
             }
-        }
-    }
-            post {
-                failure {
-                    mail(
-                        to: 'ayeshanazakat65@gmail.com',
-                        subject: "Failed Pipeline: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                        body: "Something is wrong with the build ${env.BUILD_URL}"
-                    )
-                }
-            }
+        }
+    }
+    post {
+        failure {
+            mail(
+                to: 'ayeshanazakat65@gmail.com',
+                subject: "Failed Pipeline: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                body: "Something is wrong with the build ${env.BUILD_URL}"
+            )
         }
     }
 }
