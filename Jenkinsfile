@@ -43,7 +43,34 @@ pipeline {
                     )
                 }
             }
+boolean isDeploymentSuccessful = sh(script: 'curl -s -o /dev/null -w "%{http_code}" http://13.55.189.21', returnStdout: true).trim() == '200'
 
+                    if (!isDeploymentSuccessful) {
+                       
+                        def previousSuccessfulTag = readFile('previous_successful_tag.txt').trim()
+                        sshPublisher(
+                            publishers: [
+                                sshPublisherDesc(
+                                    configName: "jenkins-demo",
+                                    transfers: [sshTransfer(
+                                        execCommand: """
+                                            docker pull ayesha65/distance-converter:${previousSuccessfulTag}
+                                            docker stop distance-converter-container || true
+                                            docker rm distance-converter-container || true
+                                            docker run -d --name distance-converter-container -p 80:80 ayesha65/distance-converter:${previousSuccessfulTag}
+                                        """
+                                    )]
+                                )
+                            ]
+                        )
+                    } else {
+                       
+                        writeFile file: 'previous_successful_tag.txt', text: "${env.BUILD_ID}"
+                    }
+                }
+            }
+        }
+    }
             post {
                 failure {
                     mail(
