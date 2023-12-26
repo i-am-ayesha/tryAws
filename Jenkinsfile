@@ -31,7 +31,7 @@ pipeline {
                     sshPublisher(
                         publishers: [
                             sshPublisherDesc(
-                                configName: "",
+                                configName: "jenkins-demo",
                                 transfers: [sshTransfer(
                                     execCommand: """
                                         docker pull ayesha65/personal-portfolio:${env.BUILD_ID}
