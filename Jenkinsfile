@@ -48,7 +48,7 @@ pipeline {
                         sshPublisher(
                             publishers: [
                                 sshPublisherDesc(
-                                    configName: "tocs-assignment",
+                                    configName: "awsJenkinssshkey",
                                     transfers: [sshTransfer(
                                         execCommand: """
                                             docker pull ayesha65/distance-converter:${previousSuccessfulTag}
