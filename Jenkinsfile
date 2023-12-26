@@ -1,53 +1,58 @@
+
 pipeline {
-    agent { label 'linux' }
-
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerHub')
-    }
-
-    options {
-        skipDefaultCheckout true
-    }
+    agent any
 
     stages {
-        stage('gitclone') {
-            steps {
-                script {
-                    checkout scm
-                }
-            }
-        }
-
         stage('Build') {
             steps {
                 script {
-                    sh 'docker build -t ayesha65/app_test:latest .'
+                    dockerImage = docker.build("ayesha65/personal-portfolio:${env.BUILD_ID}")
                 }
             }
         }
-
-        stage('Login') {
-            steps {
-                script {
-                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                }
-            }
-        }
-
         stage('Push') {
             steps {
                 script {
-                    sh 'docker push ayesha65/app_test:latest'
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        dockerImage.push()
+                    }
                 }
             }
         }
-    }
 
-    post {
-        always {
-            script {
-                sh 'docker logout'
+        stage('Test') {
+            steps {
+                sh 'ls -l index.html' 
             }
         }
-    }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    sshPublisher(
+                        publishers: [
+                            sshPublisherDesc(
+                                configName: "MyUbuntuServer", 
+                                transfers: [sshTransfer(
+                                    execCommand: """
+                                        docker pull ayesha65/personal-portfolio:${env.BUILD_ID}
+                                        docker stop personal-portfolio-container || true
+                                        docker rm personal-portfolio-container || true
+                                        docker run -d --name personal-portfolio-container -p 80:80 ayesha65/personal-portfolio:${env.BUILD_ID}
+                                    """
+                                )]
+                            )
+                        ]
+                    )
+
+                    
+    post {
+        failure {
+            mail(
+                to: 'ayeshanazakat65@gmail.com',
+                subject: "Failed Pipeline: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                body: "Something is wrong with the build ${env.BUILD_URL}"
+            )
+        }
+    }
 }
